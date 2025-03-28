@@ -1,1 +1,41 @@
+local OrionLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/shlexware/Orion/main/source"))()
 
+local Window = OrionLib:MakeWindow({
+    Name = "My Orion Hub",
+    HidePremium = false,
+    SaveConfig = true,
+    ConfigFolder = "OrionHub"
+})
+local Tab = Window:MakeTab({
+    Name = "Main",
+    Icon = "rbxassetid://4483345998",
+    PremiumOnly = false
+})
+local espEnabled = false
+
+Tab:AddToggle({
+    Name = "Enable ESP",
+    Default = false,
+    Callback = function(state)
+        espEnabled = state
+
+        for _, player in pairs(game:GetService("Players"):GetPlayers()) do
+            if player ~= game.Players.LocalPlayer then
+                if state then
+                    local highlight = Instance.new("Highlight", player.Character)
+                    highlight.FillColor = Color3.fromRGB(255, 0, 0)
+                    highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
+                    highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+                else
+                    for _, v in pairs(player.Character:GetChildren()) do
+                        if v:IsA("Highlight") then
+                            v:Destroy()
+                        end
+                    end
+                end
+            end
+        end
+    end
+})
+
+OrionLib:Init()
