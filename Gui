@@ -36,28 +36,71 @@ local Tab = Window:CreateTab("Main", 4483362458) -- Title, Image
 local Section = Tab:CreateSection("Player")
 local espEnabled = false
 
-local Toggle = Tab:CreateToggle({
+local espEnabled = false
+local espColor = Color3.fromRGB(255, 0, 0)
+
+local function createESP(player)
+    if player ~= game.Players.LocalPlayer and player.Character then
+        if not player.Character:FindFirstChild("Highlight") then
+            local highlight = Instance.new("Highlight", player.Character)
+            highlight.FillColor = espColor
+            highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
+            highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+        end
+    end
+end
+
+local function updateESP()
+    for _, player in pairs(game:GetService("Players"):GetPlayers()) do
+        createESP(player)
+    end
+end
+
+game:GetService("Players").PlayerAdded:Connect(function(player)
+    player.CharacterAdded:Connect(function()
+        if espEnabled then
+            task.wait(1) -- รอโหลดตัวละครก่อน
+            createESP(player)
+        end
+    end)
+end)
+
+local Tab = Window:CreateTab("ESP", 4483345998)
+
+Tab:CreateToggle({
     Name = "Enable ESP",
     CurrentValue = false,
     Flag = "ESP_Toggle",
     Callback = function(Value)
         espEnabled = Value
 
-        for _, player in pairs(game:GetService("Players"):GetPlayers()) do
-            if player ~= game.Players.LocalPlayer then
-                if espEnabled then
-                    local highlight = Instance.new("Highlight", player.Character)
-                    highlight.FillColor = Color3.fromRGB(255, 0, 0) -- สีแดง
-                    highlight.OutlineColor = Color3.fromRGB(255, 255, 255) -- ขอบขาว
-                    highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-                else
-                    for _, v in pairs(player.Character:GetChildren()) do
-                        if v:IsA("Highlight") then
-                            v:Destroy()
-                        end
+        if espEnabled then
+            updateESP()
+        else
+            for _, player in pairs(game:GetService("Players"):GetPlayers()) do
+                for _, v in pairs(player.Character:GetChildren()) do
+                    if v:IsA("Highlight") then
+                        v:Destroy()
                     end
                 end
             end
         end
     end
 })
+
+Tab:CreateColorPicker({
+    Name = "ESP Color",
+    Color = espColor,
+    Flag = "ESP_Color",
+    Callback = function(Color)
+        espColor = Color
+        for _, player in pairs(game:GetService("Players"):GetPlayers()) do
+            for _, v in pairs(player.Character:GetChildren()) do
+                if v:IsA("Highlight") then
+                    v.FillColor = espColor
+                end
+            end
+        end
+    end
+})
+
