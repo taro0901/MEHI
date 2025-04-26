@@ -44,7 +44,7 @@ local player = Players.LocalPlayer
 local mouse = player:GetMouse()
 
 local aimEnabled = false
-local MAX_DISTANCE = 60 -- ระยะสูงสุด
+local MAX_DISTANCE = 75 -- ระยะสูงสุด
 
 local function getClosestTarget()
     local closestTarget = nil
