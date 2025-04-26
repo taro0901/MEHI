@@ -44,7 +44,7 @@ local player = Players.LocalPlayer
 local mouse = player:GetMouse()
 
 local aimEnabled = false
-local MAX_DISTANCE = 75 -- ระยะสูงสุด
+local MAX_DISTANCE = 65 -- ระยะสูงสุด
 
 local function getClosestTarget()
     local closestTarget = nil
@@ -80,7 +80,7 @@ RunService.RenderStepped:Connect(function()
             local cam = workspace.CurrentCamera
             local targetPos = target.Character.Head.Position
             local lookAt = CFrame.new(cam.CFrame.Position, targetPos)
-            cam.CFrame = cam.CFrame:Lerp(lookAt, 0.35)
+            cam.CFrame = cam.CFrame:Lerp(lookAt, 0.38)
         end
     end
 end)
