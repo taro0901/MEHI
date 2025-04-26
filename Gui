@@ -80,7 +80,7 @@ RunService.RenderStepped:Connect(function()
             local cam = workspace.CurrentCamera
             local targetPos = target.Character.Head.Position
             local lookAt = CFrame.new(cam.CFrame.Position, targetPos)
-            cam.CFrame = cam.CFrame:Lerp(lookAt, 0.1)
+            cam.CFrame = cam.CFrame:Lerp(lookAt, 0.2)
         end
     end
 end)
