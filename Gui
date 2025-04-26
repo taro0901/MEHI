@@ -80,19 +80,20 @@ RunService.RenderStepped:Connect(function()
             local cam = workspace.CurrentCamera
             local targetPos = target.Character.Head.Position
             local lookAt = CFrame.new(cam.CFrame.Position, targetPos)
-            cam.CFrame = cam.CFrame:Lerp(lookAt, 0.38)
+            cam.CFrame = cam.CFrame:Lerp(lookAt, 0.4)
         end
     end
 end)
 
 local Toggle = Tab:CreateToggle({
-   Name = "Aimbot เลงหัว",
+   Name = "Aimbot เล็งหัว",
    CurrentValue = false,
    Flag = "AimbotHeadToggle",
    Callback = function(Value)
       aimEnabled = Value
    end,
 })
+
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 
