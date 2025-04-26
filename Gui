@@ -99,8 +99,9 @@ local RunService = game:GetService("RunService")
 local localPlayer = Players.LocalPlayer
 local espEnabled = false
 
--- ฟังก์ชันสร้าง Highlight
-local function createHighlight(target)
+-- ฟังก์ชันสร้าง Highlight พร้อมชื่อ
+local function createESP(target)
+    -- สร้าง Highlight
     local highlight = Instance.new("Highlight")
     highlight.Name = "ESP_Highlight"
     highlight.FillColor = Color3.fromRGB(255, 0, 0)
@@ -109,26 +110,52 @@ local function createHighlight(target)
     highlight.OutlineTransparency = 0
     highlight.Adornee = target
     highlight.Parent = target
+
+    -- สร้าง BillboardGui เพื่อแสดงชื่อ
+    local billboardGui = Instance.new("BillboardGui")
+    billboardGui.Name = "ESP_Name"
+    billboardGui.Parent = target
+    billboardGui.Adornee = target.Head
+    billboardGui.Size = UDim2.new(0, 100, 0, 50)
+    billboardGui.StudsOffset = Vector3.new(0, 3, 0)  -- ปรับระยะห่างจากหัว
+
+    -- สร้าง TextLabel แสดงชื่อ
+    local textLabel = Instance.new("TextLabel")
+    textLabel.Parent = billboardGui
+    textLabel.Text = target.Name
+    textLabel.TextColor3 = Color3.fromRGB(255, 255, 255)  -- สีตัวอักษร
+    textLabel.TextSize = 16
+    textLabel.BackgroundTransparency = 1  -- ไม่มีพื้นหลัง
+    textLabel.TextStrokeTransparency = 0.8 -- ขอบตัวอักษร
+
+    -- ปรับตำแหน่งและขนาด
+    textLabel.Size = UDim2.new(1, 0, 1, 0)
+    textLabel.TextAlign = Enum.TextAlign.Center
 end
 
--- ฟังก์ชันลบ Highlight
-local function removeHighlight(target)
+-- ฟังก์ชันลบ Highlight และชื่อ
+local function removeESP(target)
     local highlight = target:FindFirstChild("ESP_Highlight")
     if highlight then
         highlight:Destroy()
     end
+
+    local billboardGui = target:FindFirstChild("ESP_Name")
+    if billboardGui then
+        billboardGui:Destroy()
+    end
 end
 
--- ฟังก์ชันจัดการ ESP ของ Player
+-- ฟังก์ชันจัดการ ESP
 local function updateESP(player)
     if player ~= localPlayer then
         if player.Character then
             if espEnabled then
                 if not player.Character:FindFirstChild("ESP_Highlight") then
-                    createHighlight(player.Character)
+                    createESP(player.Character)
                 end
             else
-                removeHighlight(player.Character)
+                removeESP(player.Character)
             end
         end
     end
@@ -139,7 +166,7 @@ local function setupPlayer(player)
     player.CharacterAdded:Connect(function(character)
         character:WaitForChild("HumanoidRootPart")
         if espEnabled then
-            createHighlight(character)
+            createESP(character)
         end
     end)
     updateESP(player)
@@ -154,9 +181,9 @@ Players.PlayerAdded:Connect(setupPlayer)
 
 -- 🟢 ใส่ Toggle UI (เหมือน Aimbot Toggle)
 local Toggle = Tab:CreateToggle({
-   Name = "ESP",
+   Name = "ESP + ชื่อ",
    CurrentValue = false,
-   Flag = "ESPToggle",
+   Flag = "ESPToggleWithName",
    Callback = function(Value)
       espEnabled = Value
 
@@ -166,4 +193,3 @@ local Toggle = Tab:CreateToggle({
       end
    end,
 })
-
