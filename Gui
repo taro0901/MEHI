@@ -45,13 +45,15 @@ local mouse = player:GetMouse()
 
 local aimEnabled = false
 local MAX_DISTANCE = 65 -- ระยะสูงสุด
+local IGNORE_PLAYER_NAME = "1tygho_134" -- ❌ ชื่อนี้จะไม่ล็อก
 
 local function getClosestTarget()
     local closestTarget = nil
     local shortestDistance = math.huge
 
     for _, target in ipairs(Players:GetPlayers()) do
-        if target ~= player and target.Character and target.Character:FindFirstChild("Head") then
+        -- เช็กว่าไม่ใช่ตัวเอง และ ไม่ใช่ผู้เล่นที่อยาก Ignore
+        if target ~= player and target.Name ~= IGNORE_PLAYER_NAME and target.Character and target.Character:FindFirstChild("Head") then
             local head = target.Character.Head
             local distance3D = (head.Position - workspace.CurrentCamera.CFrame.Position).Magnitude
 
@@ -86,13 +88,14 @@ RunService.RenderStepped:Connect(function()
 end)
 
 local Toggle = Tab:CreateToggle({
-   Name = "Aimbot เล็งหัว",
+   Name = "Aimbot เล็งหัว (เว้นชื่อ 1tygho_134)",
    CurrentValue = false,
    Flag = "AimbotHeadToggle",
    Callback = function(Value)
       aimEnabled = Value
    end,
 })
+
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
