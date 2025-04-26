@@ -93,3 +93,77 @@ local Toggle = Tab:CreateToggle({
       aimEnabled = Value
    end,
 })
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+
+local localPlayer = Players.LocalPlayer
+local espEnabled = false
+
+-- ฟังก์ชันสร้าง Highlight
+local function createHighlight(target)
+    local highlight = Instance.new("Highlight")
+    highlight.Name = "ESP_Highlight"
+    highlight.FillColor = Color3.fromRGB(255, 0, 0)
+    highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
+    highlight.FillTransparency = 0.5
+    highlight.OutlineTransparency = 0
+    highlight.Adornee = target
+    highlight.Parent = target
+end
+
+-- ฟังก์ชันลบ Highlight
+local function removeHighlight(target)
+    local highlight = target:FindFirstChild("ESP_Highlight")
+    if highlight then
+        highlight:Destroy()
+    end
+end
+
+-- ฟังก์ชันจัดการ ESP ของ Player
+local function updateESP(player)
+    if player ~= localPlayer then
+        if player.Character then
+            if espEnabled then
+                if not player.Character:FindFirstChild("ESP_Highlight") then
+                    createHighlight(player.Character)
+                end
+            else
+                removeHighlight(player.Character)
+            end
+        end
+    end
+end
+
+-- เชื่อมต่อเมื่อ Character spawn ใหม่
+local function setupPlayer(player)
+    player.CharacterAdded:Connect(function(character)
+        character:WaitForChild("HumanoidRootPart")
+        if espEnabled then
+            createHighlight(character)
+        end
+    end)
+    updateESP(player)
+end
+
+-- ติดตามผู้เล่นทั้งหมด
+for _, player in ipairs(Players:GetPlayers()) do
+    setupPlayer(player)
+end
+
+Players.PlayerAdded:Connect(setupPlayer)
+
+-- 🟢 ใส่ Toggle UI (เหมือน Aimbot Toggle)
+local Toggle = Tab:CreateToggle({
+   Name = "ESP",
+   CurrentValue = false,
+   Flag = "ESPToggle",
+   Callback = function(Value)
+      espEnabled = Value
+
+      -- อัปเดต ESP ของทุกคนทันทีเมื่อเปิด/ปิด
+      for _, player in ipairs(Players:GetPlayers()) do
+          updateESP(player)
+      end
+   end,
+})
+
