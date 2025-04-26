@@ -34,25 +34,24 @@ local Window = Rayfield:CreateWindow({
  })
  local Tab = Window:CreateTab("Main", 4483362458)
  local Section = Tab:CreateSection("Aimbot")
- local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
 
 local player = Players.LocalPlayer
 local mouse = player:GetMouse()
 
 local aimEnabled = false
-local MAX_DISTANCE = 65 -- ระยะสูงสุด
-local IGNORE_PLAYER_NAME = "1tygho_134" -- ❌ ชื่อนี้จะไม่ล็อก
+local MAX_DISTANCE = 65
+local IGNORE_PLAYER_NAME = "1tygho_134"
+local HOTKEY = Enum.KeyCode.LeftControl
+ -- 🛑 ปุ่มกดเปิดปิด (เปลี่ยน Q เป็นปุ่มอื่นได้)
 
 local function getClosestTarget()
     local closestTarget = nil
     local shortestDistance = math.huge
 
     for _, target in ipairs(Players:GetPlayers()) do
-        -- เช็กว่าไม่ใช่ตัวเอง และ ไม่ใช่ผู้เล่นที่อยาก Ignore
         if target ~= player and target.Name ~= IGNORE_PLAYER_NAME and target.Character and target.Character:FindFirstChild("Head") then
             local head = target.Character.Head
             local distance3D = (head.Position - workspace.CurrentCamera.CFrame.Position).Magnitude
@@ -88,13 +87,23 @@ RunService.RenderStepped:Connect(function()
 end)
 
 local Toggle = Tab:CreateToggle({
-   Name = "Aimbot เล็งหัว (เว้นชื่อ 1tygho_134)",
+   Name = "Aimbot เล็งหัว (LeftControl)",
    CurrentValue = false,
    Flag = "AimbotHeadToggle",
    Callback = function(Value)
       aimEnabled = Value
    end,
 })
+
+-- 🛠 ระบบกดปุ่มคีย์ลัด
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if not gameProcessed then -- ต้องไม่ใช่การกดที่เมนูหรือ Textbox
+        if input.KeyCode == HOTKEY then
+            aimEnabled = not aimEnabled -- สลับเปิด/ปิด
+            Toggle:Set(aimEnabled) -- อัพเดตให้ Toggle บนเมนูกระพริบตามด้วย
+        end
+    end
+end)
 
 
 local Players = game:GetService("Players")
