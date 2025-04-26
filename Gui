@@ -100,61 +100,34 @@ local RunService = game:GetService("RunService")
 local localPlayer = Players.LocalPlayer
 local espEnabled = false
 
--- ฟังก์ชันสร้าง Highlight พร้อมชื่อ
-local function createESP(target)
-    -- สร้าง Highlight
-    local highlight = Instance.new("Highlight")
-    highlight.Name = "ESP_Highlight"
-    highlight.FillColor = Color3.fromRGB(255, 0, 0)
-    highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
-    highlight.FillTransparency = 0.5
-    highlight.OutlineTransparency = 0
-    highlight.Adornee = target
-    highlight.Parent = target
-
-    -- สร้าง BillboardGui เพื่อแสดงชื่อ
-    local billboardGui = Instance.new("BillboardGui")
-    billboardGui.Name = "ESP_Name"
-    billboardGui.Parent = target
-    billboardGui.Adornee = target.Head
-    billboardGui.Size = UDim2.new(0, 100, 0, 50)
-    billboardGui.StudsOffset = Vector3.new(0, 3, 0)  -- ปรับระยะห่างจากหัว
-
-    -- สร้าง TextLabel แสดงชื่อ
-    local textLabel = Instance.new("TextLabel")
-    textLabel.Parent = billboardGui
-    textLabel.Text = target.Name
-    textLabel.TextColor3 = Color3.fromRGB(255, 255, 255)  -- สีตัวอักษร
-    textLabel.TextSize = 16
-    textLabel.BackgroundTransparency = 1  -- ไม่มีพื้นหลัง
-    textLabel.TextStrokeTransparency = 0.8 -- ขอบตัวอักษร
-
-    -- ปรับตำแหน่งและขนาด
-    textLabel.Size = UDim2.new(1, 0, 1, 0)
-    textLabel.TextAlign = Enum.TextAlign.Center
+-- 📦 ฟังก์ชันสร้าง ESP (Highlight)
+local function createESP(character)
+    if not character:FindFirstChild("ESP_Highlight") then
+        local highlight = Instance.new("Highlight")
+        highlight.Name = "ESP_Highlight"
+        highlight.FillColor = Color3.fromRGB(255, 0, 0) -- สีตัว ESP
+        highlight.OutlineColor = Color3.fromRGB(255, 255, 255) -- สีขอบ
+        highlight.FillTransparency = 0.5
+        highlight.OutlineTransparency = 0
+        highlight.Adornee = character
+        highlight.Parent = character
+    end
 end
 
--- ฟังก์ชันลบ Highlight และชื่อ
-local function removeESP(target)
-    local highlight = target:FindFirstChild("ESP_Highlight")
+-- 🗑️ ฟังก์ชันลบ ESP
+local function removeESP(character)
+    local highlight = character:FindFirstChild("ESP_Highlight")
     if highlight then
         highlight:Destroy()
     end
-
-    local billboardGui = target:FindFirstChild("ESP_Name")
-    if billboardGui then
-        billboardGui:Destroy()
-    end
 end
 
--- ฟังก์ชันจัดการ ESP
+-- 🎯 ฟังก์ชันอัปเดต ESP ให้กับผู้เล่นคนเดียว
 local function updateESP(player)
     if player ~= localPlayer then
         if player.Character then
             if espEnabled then
-                if not player.Character:FindFirstChild("ESP_Highlight") then
-                    createESP(player.Character)
-                end
+                createESP(player.Character)
             else
                 removeESP(player.Character)
             end
@@ -162,33 +135,40 @@ local function updateESP(player)
     end
 end
 
--- เชื่อมต่อเมื่อ Character spawn ใหม่
+-- ⚡ ฟังก์ชันเชื่อมต่อเมื่อตัวละครของผู้เล่นเกิด
 local function setupPlayer(player)
+    -- ถ้ามีตัวละครแล้ว
+    if player.Character then
+        wait(0.5) -- รอโหลดตัวเสร็จก่อน
+        updateESP(player)
+    end
+
+    -- ถ้ามีการเกิดตัวใหม่
     player.CharacterAdded:Connect(function(character)
-        character:WaitForChild("HumanoidRootPart")
-        if espEnabled then
-            createESP(character)
-        end
+        character:WaitForChild("HumanoidRootPart") -- รอโหลด
+        wait(0.5)
+        updateESP(player)
     end)
-    updateESP(player)
 end
 
--- ติดตามผู้เล่นทั้งหมด
+-- 🛠️ ติดตั้ง ESP ให้ผู้เล่นที่มีอยู่แล้ว
 for _, player in ipairs(Players:GetPlayers()) do
     setupPlayer(player)
 end
 
-Players.PlayerAdded:Connect(setupPlayer)
+-- 🛠️ เมื่่อมีผู้เล่นใหม่เข้ามา
+Players.PlayerAdded:Connect(function(player)
+    setupPlayer(player)
+end)
 
 -- 🟢 ใส่ Toggle UI (เหมือน Aimbot Toggle)
 local Toggle = Tab:CreateToggle({
-   Name = "ESP + ชื่อ",
+   Name = "ESP (มองเห็นศัตรู)",
    CurrentValue = false,
-   Flag = "ESPToggleWithName",
+   Flag = "ESP_Toggle",
    Callback = function(Value)
       espEnabled = Value
-
-      -- อัปเดต ESP ของทุกคนทันทีเมื่อเปิด/ปิด
+      -- อัปเดต ESP ทุกคนเมื่อเปิด/ปิด
       for _, player in ipairs(Players:GetPlayers()) do
           updateESP(player)
       end
