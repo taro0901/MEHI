@@ -1,106 +1,89 @@
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 local Window = Rayfield:CreateWindow({
-   Name = "Rayfield Example Window",
-   Icon = 0, -- Icon in Topbar. Can use Lucide Icons (string) or Roblox Image (number). 0 to use no icon (default).
-   LoadingTitle = "Rayfield Interface Suite",
-   LoadingSubtitle = "by Sirius",
-   Theme = "Default", -- Check https://docs.sirius.menu/rayfield/configuration/themes
+    Name = "Rayfield Example Window",
+    Icon = 0, -- Icon in Topbar. Can use Lucide Icons (string) or Roblox Image (number). 0 to use no icon (default).
+    LoadingTitle = "Rayfield Interface Suite",
+    LoadingSubtitle = "by Sirius",
+    Theme = "Default", -- Check https://docs.sirius.menu/rayfield/configuration/themes
+ 
+    DisableRayfieldPrompts = false,
+    DisableBuildWarnings = false, -- Prevents Rayfield from warning when the script has a version mismatch with the interface
+ 
+    ConfigurationSaving = {
+       Enabled = true,
+       FolderName = nil, -- Create a custom folder for your hub/game
+       FileName = "roKu Hub"
+    },
+ 
+    Discord = {
+       Enabled = false, -- Prompt the user to join your Discord server if their executor supports it
+       Invite = "noinvitelink", -- The Discord invite code, do not include discord.gg/. E.g. discord.gg/ ABCD would be ABCD
+       RememberJoins = true -- Set this to false to make them join the discord every time they load it up
+    },
+ 
+    KeySystem = false, -- Set this to true to use our key system
+    KeySettings = {
+       Title = "Untitled",
+       Subtitle = "Key System",
+       Note = "No method of obtaining the key is provided", -- Use this to tell the user how to get a key
+       FileName = "Key", -- It is recommended to use something unique as other scripts using Rayfield may overwrite your key file
+       SaveKey = true, -- The user's key will be saved, but if you change the key, they will be unable to use your script
+       GrabKeyFromSite = false, -- If this is true, set Key below to the RAW site you would like Rayfield to get the key from
+       Key = {"123"} -- List of keys that will be accepted by the system, can be RAW file links (pastebin, github etc) or simple strings ("hello","key22")
+    }
+ })
+ local Tab = Window:CreateTab("Main", 4483362458)
+ local Section = Tab:CreateSection("Aimbot")
+ local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
 
-   DisableRayfieldPrompts = false,
-   DisableBuildWarnings = false, -- Prevents Rayfield from warning when the script has a version mismatch with the interface
+local player = Players.LocalPlayer
+local mouse = player:GetMouse()
 
-   ConfigurationSaving = {
-      Enabled = true,
-      FolderName = nil, -- Create a custom folder for your hub/game
-      FileName = "Big Hub"
-   },
+local aimEnabled = false -- เริ่มปิดไว้
 
-   Discord = {
-      Enabled = false, -- Prompt the user to join your Discord server if their executor supports it
-      Invite = "noinvitelink", -- The Discord invite code, do not include discord.gg/. E.g. discord.gg/ ABCD would be ABCD
-      RememberJoins = true -- Set this to false to make them join the discord every time they load it up
-   },
+-- ฟังก์ชันหาศัตรูใกล้สุดหน้าจอ
+local function getClosestTarget()
+    local closestTarget = nil
+    local shortestDistance = math.huge
 
-   KeySystem = false, -- Set this to true to use our key system
-   KeySettings = {
-      Title = "Untitled",
-      Subtitle = "Key System",
-      Note = "No method of obtaining the key is provided", -- Use this to tell the user how to get a key
-      FileName = "Key", -- It is recommended to use something unique as other scripts using Rayfield may overwrite your key file
-      SaveKey = true, -- The user's key will be saved, but if you change the key, they will be unable to use your script
-      GrabKeyFromSite = false, -- If this is true, set Key below to the RAW site you would like Rayfield to get the key from
-      Key = {"Hello"} -- List of keys that will be accepted by the system, can be RAW file links (pastebin, github etc) or simple strings ("hello","key22")
-   }
-})
-local Tab = Window:CreateTab("Main", 4483362458) -- Title, Image
-local Section = Tab:CreateSection("Player")
-local espEnabled = false
+    for _, target in ipairs(Players:GetPlayers()) do
+        if target ~= player and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
+            local targetPos = target.Character.HumanoidRootPart.Position
+            local screenPoint, onScreen = workspace.CurrentCamera:WorldToViewportPoint(targetPos)
 
-local espEnabled = false
-local espColor = Color3.fromRGB(255, 0, 0)
+            if onScreen then
+                local mousePos = Vector2.new(mouse.X, mouse.Y)
+                local distance = (mousePos - Vector2.new(screenPoint.X, screenPoint.Y)).Magnitude
 
-local function createESP(player)
-    if player ~= game.Players.LocalPlayer and player.Character then
-        if not player.Character:FindFirstChild("Highlight") then
-            local highlight = Instance.new("Highlight", player.Character)
-            highlight.FillColor = espColor
-            highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
-            highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+                if distance < shortestDistance then
+                    shortestDistance = distance
+                    closestTarget = target
+                end
+            end
         end
     end
+
+    return closestTarget
 end
 
-local function updateESP()
-    for _, player in pairs(game:GetService("Players"):GetPlayers()) do
-        createESP(player)
-    end
-end
-
-game:GetService("Players").PlayerAdded:Connect(function(player)
-    player.CharacterAdded:Connect(function()
-        if espEnabled then
-            task.wait(1) -- รอโหลดตัวละครก่อน
-            createESP(player)
+-- Event สำหรับเล็งทุกเฟรม (ถ้าเปิด Aimbot)
+RunService.RenderStepped:Connect(function()
+    if aimEnabled then
+        local target = getClosestTarget()
+        if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
+            local targetPos = target.Character.HumanoidRootPart.Position
+            workspace.CurrentCamera.CFrame = CFrame.new(workspace.CurrentCamera.CFrame.Position, targetPos)
         end
-    end)
+    end
 end)
 
-local Tab = Window:CreateTab("ESP", 4483345998)
-
-Tab:CreateToggle({
-    Name = "Enable ESP",
-    CurrentValue = false,
-    Flag = "ESP_Toggle",
-    Callback = function(Value)
-        espEnabled = Value
-
-        if espEnabled then
-            updateESP()
-        else
-            for _, player in pairs(game:GetService("Players"):GetPlayers()) do
-                for _, v in pairs(player.Character:GetChildren()) do
-                    if v:IsA("Highlight") then
-                        v:Destroy()
-                    end
-                end
-            end
-        end
-    end
+-- 🟢 ใส่เข้ากับ Toggle UI ของคุณ
+local Toggle = Tab:CreateToggle({
+   Name = "Aimbot",
+   CurrentValue = false,
+   Flag = "AimbotToggle",
+   Callback = function(Value)
+      aimEnabled = Value
+   end,
 })
-
-Tab:CreateColorPicker({
-    Name = "ESP Color",
-    Color = espColor,
-    Flag = "ESP_Color",
-    Callback = function(Color)
-        espColor = Color
-        for _, player in pairs(game:GetService("Players"):GetPlayers()) do
-            for _, v in pairs(player.Character:GetChildren()) do
-                if v:IsA("Highlight") then
-                    v.FillColor = espColor
-                end
-            end
-        end
-    end
-})
-
