@@ -34,36 +34,45 @@ local Window = Rayfield:CreateWindow({
  })
  local Tab = Window:CreateTab("Main", 4483362458)
  local Section = Tab:CreateSection("Aimbot")
+
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 
 local player = Players.LocalPlayer
 local mouse = player:GetMouse()
+local camera = workspace.CurrentCamera
 
 local aimEnabled = false
 local MAX_DISTANCE = 65
-local IGNORE_PLAYER_NAME = "1tygho_134"
-local HOTKEY = Enum.KeyCode.LeftControl
- -- 🛑 ปุ่มกดเปิดปิด (เปลี่ยน Q เป็นปุ่มอื่นได้)
+local AIM_SMOOTHNESS = 0.2
 
+local BLOCKED_NAMES = { -- ❌ ชื่อที่ไม่ล็อก
+    ["1tygho_134"] = true
+}
+
+-- หาเป้าหมายใกล้สุด
 local function getClosestTarget()
     local closestTarget = nil
     local shortestDistance = math.huge
 
     for _, target in ipairs(Players:GetPlayers()) do
-        if target ~= player and target.Name ~= IGNORE_PLAYER_NAME and target.Character and target.Character:FindFirstChild("Head") then
-            local head = target.Character.Head
-            local distance3D = (head.Position - workspace.CurrentCamera.CFrame.Position).Magnitude
+        if target ~= player
+        and not BLOCKED_NAMES[target.Name]
+        and target.Character
+        and target.Character:FindFirstChild("Head") then
 
-            if distance3D <= MAX_DISTANCE then
-                local screenPoint, onScreen = workspace.CurrentCamera:WorldToViewportPoint(head.Position)
+            local head = target.Character.Head
+            if head and head:IsA("BasePart") and target.Character:FindFirstChild("Humanoid") and target.Character.Humanoid.Health > 0 then
+                local headPos, onScreen = camera:WorldToViewportPoint(head.Position)
+
                 if onScreen then
                     local mousePos = Vector2.new(mouse.X, mouse.Y)
-                    local dist2D = (mousePos - Vector2.new(screenPoint.X, screenPoint.Y)).Magnitude
+                    local distance = (mousePos - Vector2.new(headPos.X, headPos.Y)).Magnitude
+                    local distance3D = (camera.CFrame.Position - head.Position).Magnitude
 
-                    if dist2D < shortestDistance then
-                        shortestDistance = dist2D
+                    if distance < shortestDistance and distance3D <= MAX_DISTANCE then
+                        shortestDistance = distance
                         closestTarget = target
                     end
                 end
@@ -74,34 +83,34 @@ local function getClosestTarget()
     return closestTarget
 end
 
+-- อัพเดทกล้องตามเป้า
 RunService.RenderStepped:Connect(function()
     if aimEnabled then
         local target = getClosestTarget()
         if target and target.Character and target.Character:FindFirstChild("Head") then
-            local cam = workspace.CurrentCamera
-            local targetPos = target.Character.Head.Position
-            local lookAt = CFrame.new(cam.CFrame.Position, targetPos)
-            cam.CFrame = cam.CFrame:Lerp(lookAt, 0.4)
+            local headPos = target.Character.Head.Position
+            local newCFrame = CFrame.new(camera.CFrame.Position, headPos)
+            camera.CFrame = camera.CFrame:Lerp(newCFrame, AIM_SMOOTHNESS)
         end
     end
 end)
 
+-- 🌟 Rayfield UI Toggle
 local Toggle = Tab:CreateToggle({
-   Name = "Aimbot เล็งหัว (LeftControl)",
+   Name = "Aimbot เล็งหัว (มีคีย์ลัด)",
    CurrentValue = false,
-   Flag = "AimbotHeadToggle",
+   Flag = "StableAimbotWithKeybind",
    Callback = function(Value)
       aimEnabled = Value
    end,
 })
 
--- 🛠 ระบบกดปุ่มคีย์ลัด
+-- 🎯 ระบบคีย์ลัด (Left Control เปิด/ปิด)
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
-    if not gameProcessed then -- ต้องไม่ใช่การกดที่เมนูหรือ Textbox
-        if input.KeyCode == HOTKEY then
-            aimEnabled = not aimEnabled -- สลับเปิด/ปิด
-            Toggle:Set(aimEnabled) -- อัพเดตให้ Toggle บนเมนูกระพริบตามด้วย
-        end
+    if gameProcessed then return end
+    if input.KeyCode == Enum.KeyCode.LeftControl then
+        aimEnabled = not aimEnabled -- เปิด/ปิด
+        Toggle:Set(aimEnabled) -- อัพเดท UI Toggle ด้วย
     end
 end)
 
