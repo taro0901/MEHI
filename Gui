@@ -195,3 +195,144 @@ local Toggle = Tab:CreateToggle({
       end
    end,
 })
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+
+local player = Players.LocalPlayer
+local WalkSpeed_Normal = 16 -- ความเร็วเดินปกติ
+local WalkSpeed_Fast = 50 -- ความเร็วตอนเปิดสปีด
+
+local speedEnabled = false -- สถานะเปิด/ปิดความเร็ว
+
+-- ฟังก์ชันปรับสปีด
+local function updateSpeed()
+    if player.Character and player.Character:FindFirstChildOfClass("Humanoid") then
+        local humanoid = player.Character:FindFirstChildOfClass("Humanoid")
+        if speedEnabled then
+            humanoid.WalkSpeed = WalkSpeed_Fast
+        else
+            humanoid.WalkSpeed = WalkSpeed_Normal
+        end
+    end
+end
+
+-- ตัวละครเกิดใหม่ (กันตายแล้วสปีดหาย)
+player.CharacterAdded:Connect(function()
+    wait(1)
+    updateSpeed()
+end)
+
+-- เซ็ตสปีดทันทีตอนเริ่ม
+if player.Character then
+    updateSpeed()
+end
+
+-- ✅ Rayfield UI Toggle
+local Toggle = Tab:CreateToggle({
+    Name = "เปิด/ปิด วิ่งไว",
+    CurrentValue = false,
+    Flag = "FastWalkToggle",
+    Callback = function(Value)
+        speedEnabled = Value
+        updateSpeed()
+    end,
+})
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local player = Players.LocalPlayer
+local Rayfield = loadstring(game:HttpGet("https://raw.githubusercontent.com/averydev/Rayfield/main/source.lua"))()
+
+local ESPFolder = Instance.new("Folder")
+ESPFolder.Name = "ESPFolder"
+ESPFolder.Parent = game.CoreGui -- วางที่ CoreGui
+
+local speedEnabled = false -- ใช้เปิด/ปิด ESP
+
+-- ฟังก์ชันสร้าง ESP
+local function createESP(targetPlayer)
+    if targetPlayer.Character and targetPlayer.Character:FindFirstChild("Head") then
+        local billboard = Instance.new("BillboardGui")
+        billboard.Name = "ESP"
+        billboard.Adornee = targetPlayer.Character.Head
+        billboard.Size = UDim2.new(4, 0, 1, 0)
+        billboard.StudsOffset = Vector3.new(0, 3, 0)
+        billboard.AlwaysOnTop = true
+        billboard.Parent = ESPFolder
+
+        -- ชื่อผู้เล่น
+        local nameLabel = Instance.new("TextLabel")
+        nameLabel.Size = UDim2.new(1, 0, 1, 0)
+        nameLabel.BackgroundTransparency = 1
+        nameLabel.Text = targetPlayer.Name -- ชื่อผู้เล่น
+        nameLabel.TextColor3 = Color3.fromRGB(255, 0, 0) -- สีแดง
+        nameLabel.TextStrokeTransparency = 0
+        nameLabel.Font = Enum.Font.GothamBold
+        nameLabel.TextScaled = true
+        nameLabel.Parent = billboard
+    end
+end
+
+-- ฟังก์ชันลบ ESP
+local function removeESP(targetPlayer)
+    for _, esp in pairs(ESPFolder:GetChildren()) do
+        if esp:IsA("BillboardGui") and esp.Adornee and esp.Adornee.Parent and Players:GetPlayerFromCharacter(esp.Adornee.Parent) == targetPlayer then
+            esp:Destroy()
+        end
+    end
+end
+
+-- ใส่ ESP ให้ผู้เล่นที่มีอยู่แล้ว
+for _, target in ipairs(Players:GetPlayers()) do
+    if target ~= player then
+        createESP(target)
+    end
+end
+
+-- เมื่อมีผู้เล่นใหม่เข้ามา
+Players.PlayerAdded:Connect(function(newPlayer)
+    newPlayer.CharacterAdded:Connect(function()
+        wait(1) -- รอโหลดตัว
+        if speedEnabled then
+            createESP(newPlayer)
+        end
+    end)
+end)
+
+-- เมื่อผู้เล่นออก
+Players.PlayerRemoving:Connect(function(leavingPlayer)
+    removeESP(leavingPlayer)
+end)
+
+-- ✅ Rayfield UI Toggle สำหรับเปิด/ปิด ESP
+local Tab = Rayfield:CreateTab({
+    Name = "ESP Controller",
+    Icon = "rbxassetid://4483345998", -- Icon จาก Roblox
+    PremiumOnly = false
+})
+
+local Toggle = Tab:CreateToggle({
+    Name = "เปิด/ปิด ESP",
+    CurrentValue = false,
+    Flag = "ESP_Toggle", -- ให้ Flag เผื่อใช้ในการเซฟค่าผ่าน Rayfield
+    Callback = function(Value)
+        speedEnabled = Value
+
+        -- ถ้าเปิด ESP, ให้ทำการสร้าง ESP ใหม่
+        if speedEnabled then
+            -- ใส่ ESP ให้ผู้เล่นที่มีอยู่แล้ว
+            for _, target in ipairs(Players:GetPlayers()) do
+                if target ~= player then
+                    createESP(target)
+                end
+            end
+        else
+            -- ถ้าปิด ESP, ลบทุกตัว ESP
+            for _, esp in pairs(ESPFolder:GetChildren()) do
+                esp:Destroy()
+            end
+        end
+    end
+})
+
