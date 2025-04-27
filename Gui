@@ -38,7 +38,6 @@ local Window = Rayfield:CreateWindow({
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
-local MarketplaceService = game:GetService("MarketplaceService")
 
 local player = Players.LocalPlayer
 local mouse = player:GetMouse()
@@ -48,80 +47,72 @@ local aimEnabled = false
 local MAX_DISTANCE = 65
 local AIM_SMOOTHNESS = 0.2
 
-local BLOCKED_NAMES = {
+local BLOCKED_NAMES = { -- ❌ ชื่อที่ไม่ล็อก
     ["1tygho_134"] = true
 }
 
--- เช็คว่าเป็นแมพ Block Spin ไหม
-local success, gameInfo = pcall(function()
-    return MarketplaceService:GetProductInfo(game.PlaceId)
-end)
+-- หาเป้าหมายใกล้สุด
+local function getClosestTarget()
+    local closestTarget = nil
+    local shortestDistance = math.huge
 
-if success and gameInfo and gameInfo.Name == "Block Spin" then
-    -- รัน Aimbot ปกติ
-    local function getClosestTarget()
-        local closestTarget = nil
-        local shortestDistance = math.huge
+    for _, target in ipairs(Players:GetPlayers()) do
+        if target ~= player
+        and not BLOCKED_NAMES[target.Name]
+        and target.Character
+        and target.Character:FindFirstChild("Head") then
 
-        for _, target in ipairs(Players:GetPlayers()) do
-            if target ~= player
-            and not BLOCKED_NAMES[target.Name]
-            and target.Character
-            and target.Character:FindFirstChild("Head") then
+            local head = target.Character.Head
+            if head and head:IsA("BasePart") and target.Character:FindFirstChild("Humanoid") and target.Character.Humanoid.Health > 0 then
+                local headPos, onScreen = camera:WorldToViewportPoint(head.Position)
 
-                local head = target.Character.Head
-                if head and head:IsA("BasePart") and target.Character:FindFirstChild("Humanoid") and target.Character.Humanoid.Health > 0 then
-                    local headPos, onScreen = camera:WorldToViewportPoint(head.Position)
+                if onScreen then
+                    local mousePos = Vector2.new(mouse.X, mouse.Y)
+                    local distance = (mousePos - Vector2.new(headPos.X, headPos.Y)).Magnitude
+                    local distance3D = (camera.CFrame.Position - head.Position).Magnitude
 
-                    if onScreen then
-                        local mousePos = Vector2.new(mouse.X, mouse.Y)
-                        local distance = (mousePos - Vector2.new(headPos.X, headPos.Y)).Magnitude
-                        local distance3D = (camera.CFrame.Position - head.Position).Magnitude
-
-                        if distance < shortestDistance and distance3D <= MAX_DISTANCE then
-                            shortestDistance = distance
-                            closestTarget = target
-                        end
+                    if distance < shortestDistance and distance3D <= MAX_DISTANCE then
+                        shortestDistance = distance
+                        closestTarget = target
                     end
                 end
             end
         end
-
-        return closestTarget
     end
 
-    RunService.RenderStepped:Connect(function()
-        if aimEnabled then
-            local target = getClosestTarget()
-            if target and target.Character and target.Character:FindFirstChild("Head") then
-                local headPos = target.Character.Head.Position
-                local newCFrame = CFrame.new(camera.CFrame.Position, headPos)
-                camera.CFrame = camera.CFrame:Lerp(newCFrame, AIM_SMOOTHNESS)
-            end
-        end
-    end)
-
-    -- 🌟 Rayfield UI Toggle
-    local Toggle = Tab:CreateToggle({
-       Name = "Aimbot (เฉพาะ Block Spin)",
-       CurrentValue = false,
-       Flag = "BlockSpinAimbotToggle",
-       Callback = function(Value)
-          aimEnabled = Value
-       end,
-    })
-
-    -- 🎯 ระบบคีย์ลัด (Left Control)
-    UserInputService.InputBegan:Connect(function(input, gameProcessed)
-        if gameProcessed then return end
-        if input.KeyCode == Enum.KeyCode.LeftControl then
-            aimEnabled = not aimEnabled
-            Toggle:Set(aimEnabled)
-        end
-    end)
-else
-    warn("⚠️ ไม่ใช่แมพ Block Spin - Aimbot จะไม่ทำงาน")
+    return closestTarget
 end
+
+-- อัพเดทกล้องตามเป้า
+RunService.RenderStepped:Connect(function()
+    if aimEnabled then
+        local target = getClosestTarget()
+        if target and target.Character and target.Character:FindFirstChild("Head") then
+            local headPos = target.Character.Head.Position
+            local newCFrame = CFrame.new(camera.CFrame.Position, headPos)
+            camera.CFrame = camera.CFrame:Lerp(newCFrame, AIM_SMOOTHNESS)
+        end
+    end
+end)
+
+-- 🌟 Rayfield UI Toggle
+local Toggle = Tab:CreateToggle({
+   Name = "Aimbot เล็งหัว (มีคีย์ลัด)",
+   CurrentValue = false,
+   Flag = "StableAimbotWithKeybind",
+   Callback = function(Value)
+      aimEnabled = Value
+   end,
+})
+
+-- 🎯 ระบบคีย์ลัด (Left Control เปิด/ปิด)
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+    if input.KeyCode == Enum.KeyCode.LeftControl then
+        aimEnabled = not aimEnabled -- เปิด/ปิด
+        Toggle:Set(aimEnabled) -- อัพเดท UI Toggle ด้วย
+    end
+end)
 
 
 local Players = game:GetService("Players")
