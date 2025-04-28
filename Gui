@@ -120,27 +120,56 @@ local RunService = game:GetService("RunService")
 local localPlayer = Players.LocalPlayer
 local espEnabled = false
 
--- 📦 ฟังก์ชันสร้าง ESP (Highlight)
-local function createESP(character)
+-- 📦 ฟังก์ชันสร้าง ESP (Highlight + BillboardGui)
+local function createESP(character, player)
     if not character or not character:FindFirstChild("HumanoidRootPart") then return end
+
+    -- สร้าง Highlight ถ้ายังไม่มี
     if not character:FindFirstChild("ESP_Highlight") then
         local highlight = Instance.new("Highlight")
         highlight.Name = "ESP_Highlight"
-        highlight.FillColor = Color3.fromRGB(255, 0, 0)
-        highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
+        highlight.FillColor = Color3.fromRGB(255, 0, 0) -- สีตัว ESP
+        highlight.OutlineColor = Color3.fromRGB(255, 255, 255) -- สีขอบ
         highlight.FillTransparency = 0.5
         highlight.OutlineTransparency = 0
         highlight.Adornee = character
         highlight.Parent = character
+    end
+
+    -- สร้าง BillboardGui ชื่อ ถ้ายังไม่มี
+    if not character:FindFirstChild("ESP_Billboard") then
+        local billboard = Instance.new("BillboardGui")
+        billboard.Name = "ESP_Billboard"
+        billboard.Adornee = character:FindFirstChild("HumanoidRootPart")
+        billboard.Size = UDim2.new(0, 200, 0, 50)
+        billboard.StudsOffset = Vector3.new(0, 3, 0) -- ลอยสูงขึ้นหน่อย
+        billboard.AlwaysOnTop = true
+        billboard.Parent = character
+
+        local nameLabel = Instance.new("TextLabel")
+        nameLabel.Size = UDim2.new(1, 0, 1, 0)
+        nameLabel.BackgroundTransparency = 1
+        nameLabel.Text = player.Name -- แสดงชื่อผู้เล่น
+        nameLabel.TextColor3 = Color3.new(1, 1, 1) -- สีขาว
+        nameLabel.TextStrokeTransparency = 0 -- ขอบดำ
+        nameLabel.TextScaled = true
+        nameLabel.Font = Enum.Font.SourceSansBold
+        nameLabel.Parent = billboard
     end
 end
 
 -- 🗑️ ฟังก์ชันลบ ESP
 local function removeESP(character)
     if not character then return end
+
     local highlight = character:FindFirstChild("ESP_Highlight")
     if highlight then
         highlight:Destroy()
+    end
+
+    local billboard = character:FindFirstChild("ESP_Billboard")
+    if billboard then
+        billboard:Destroy()
     end
 end
 
@@ -148,7 +177,7 @@ end
 local function updateESP(player)
     if player ~= localPlayer and player.Character then
         if espEnabled then
-            createESP(player.Character)
+            createESP(player.Character, player)
         else
             removeESP(player.Character)
         end
@@ -159,7 +188,7 @@ end
 local function onCharacterAdded(player, character)
     character:WaitForChild("HumanoidRootPart", 5)
     if espEnabled then
-        createESP(character)
+        createESP(character, player)
     end
 end
 
@@ -168,13 +197,12 @@ local function setupPlayer(player)
     player.CharacterAdded:Connect(function(character)
         onCharacterAdded(player, character)
     end)
-    -- เผื่อกรณีตัวละครมีอยู่แล้ว
     if player.Character then
         onCharacterAdded(player, player.Character)
     end
 end
 
--- 🔥 เชื่อมต่อกับผู้เล่นทุกคนที่มีอยู่แล้ว
+-- 🔥 เชื่อมต่อผู้เล่นที่มีอยู่
 for _, player in ipairs(Players:GetPlayers()) do
     setupPlayer(player)
 end
@@ -184,12 +212,11 @@ Players.PlayerAdded:Connect(setupPlayer)
 
 -- 🟢 Toggle ESP
 local Toggle = Tab:CreateToggle({
-    Name = "ESP (มองเห็นศัตรู)",
+    Name = "ESP (เรืองแสง + เห็นชื่อ)",
     CurrentValue = false,
     Flag = "ESP_Toggle",
     Callback = function(Value)
         espEnabled = Value
-        -- อัปเดต ESP ให้ทุกคนอีกครั้ง
         for _, player in ipairs(Players:GetPlayers()) do
             updateESP(player)
         end
@@ -204,6 +231,7 @@ RunService.RenderStepped:Connect(function()
         end
     end
 end)
+
 
 
 
