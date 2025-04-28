@@ -185,9 +185,19 @@ local function removeESP(character)
     end
     local billboard = character:FindFirstChild("ESP_Billboard")
     if billboard then
+        -- ลบแถบเลือดออกจาก ESP
+        local healthBarBackground = billboard:FindFirstChild("HealthBarBackground")
+        if healthBarBackground then
+            healthBarBackground:Destroy()
+        end
+        local healthBar = billboard:FindFirstChild("HealthBar")
+        if healthBar then
+            healthBar:Destroy()
+        end
         billboard:Destroy()
     end
 end
+
 
 -- 🎯 อัปเดต ESP
 local function updateESP(player)
