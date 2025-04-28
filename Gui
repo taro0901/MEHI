@@ -128,16 +128,52 @@ local Toggle = MainTab:CreateToggle({
             RunService.RenderStepped:Connect(function()
                 for _, player in pairs(Players:GetPlayers()) do
                     if player ~= LocalPlayer then
-                        if not player.Character then continue end
-                        if not player.Character:FindFirstChild("HumanoidRootPart") then continue end
-                        if not player.Character:FindFirstChild("ESP_Billboard") then
+                        if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+                            -- ตรวจสอบว่า Character พร้อมแล้ว
+                            if not player.Character:FindFirstChild("ESP_Billboard") then
+                                local billboard = Instance.new("BillboardGui")
+                                billboard.Name = "ESP_Billboard"
+                                billboard.Adornee = player.Character.HumanoidRootPart
+                                billboard.Size = UDim2.new(0, 200, 0, 50)
+                                billboard.StudsOffset = Vector3.new(0, 3, 0)
+                                billboard.AlwaysOnTop = true
+                                billboard.Parent = player.Character
+
+                                local textLabel = Instance.new("TextLabel")
+                                textLabel.Size = UDim2.new(1, 0, 1, 0)
+                                textLabel.BackgroundTransparency = 1
+                                textLabel.Text = player.Name -- แสดงชื่อผู้เล่น
+                                textLabel.TextColor3 = Color3.new(1, 0, 0) -- สีแดง
+                                textLabel.TextStrokeTransparency = 0
+                                textLabel.TextScaled = true
+                                textLabel.Parent = billboard
+
+                                -- เพิ่มการอัปเดตชื่อทุกเฟรม
+                                RunService.RenderStepped:Connect(function()
+                                    if billboard and billboard.Parent and billboard:FindFirstChildOfClass("TextLabel") then
+                                        billboard.TextLabel.Text = player.Name -- อัปเดตชื่อทุกเฟรม
+                                    end
+                                end)
+                            end
+                        end
+                    end
+                end
+            end)
+
+            -- เชื่อมกับ PlayerAdded เพื่อให้ ESP กับผู้เล่นใหม่
+            Players.PlayerAdded:Connect(function(player)
+                if player ~= LocalPlayer then
+                    -- รอให้ตัวละครของผู้เล่นใหม่โหลดเสร็จ
+                    player.CharacterAdded:Connect(function(character)
+                        -- รอให้ตัวละครมี HumanoidRootPart ก่อนสร้าง ESP
+                        if character:FindFirstChild("HumanoidRootPart") then
                             local billboard = Instance.new("BillboardGui")
                             billboard.Name = "ESP_Billboard"
-                            billboard.Adornee = player.Character.HumanoidRootPart
+                            billboard.Adornee = character.HumanoidRootPart
                             billboard.Size = UDim2.new(0, 200, 0, 50)
                             billboard.StudsOffset = Vector3.new(0, 3, 0)
                             billboard.AlwaysOnTop = true
-                            billboard.Parent = player.Character
+                            billboard.Parent = character
 
                             local textLabel = Instance.new("TextLabel")
                             textLabel.Size = UDim2.new(1, 0, 1, 0)
@@ -148,47 +184,13 @@ local Toggle = MainTab:CreateToggle({
                             textLabel.TextScaled = true
                             textLabel.Parent = billboard
 
-                            -- เพิ่มการอัปเดตชื่อทุกเฟรม
+                            -- อัปเดตชื่อผู้เล่นใหม่
                             RunService.RenderStepped:Connect(function()
                                 if billboard and billboard.Parent and billboard:FindFirstChildOfClass("TextLabel") then
-                                    billboard.TextLabel.Text = player.Name -- อัปเดตชื่อทุกเฟรม
+                                    billboard.TextLabel.Text = player.Name
                                 end
                             end)
                         end
-                    end
-                end
-            end)
-            
-            -- เชื่อมกับ PlayerAdded เพื่อให้ ESP กับผู้เล่นใหม่
-            Players.PlayerAdded:Connect(function(player)
-                if player ~= LocalPlayer then
-                    -- รอให้ตัวละครของผู้เล่นใหม่โหลดเสร็จ
-                    player.CharacterAdded:Connect(function(character)
-                        -- สร้าง ESP ให้กับผู้เล่นใหม่
-                        if not character:FindFirstChild("HumanoidRootPart") then return end
-                        local billboard = Instance.new("BillboardGui")
-                        billboard.Name = "ESP_Billboard"
-                        billboard.Adornee = character.HumanoidRootPart
-                        billboard.Size = UDim2.new(0, 200, 0, 50)
-                        billboard.StudsOffset = Vector3.new(0, 3, 0)
-                        billboard.AlwaysOnTop = true
-                        billboard.Parent = character
-
-                        local textLabel = Instance.new("TextLabel")
-                        textLabel.Size = UDim2.new(1, 0, 1, 0)
-                        textLabel.BackgroundTransparency = 1
-                        textLabel.Text = player.Name -- แสดงชื่อผู้เล่น
-                        textLabel.TextColor3 = Color3.new(1, 0, 0) -- สีแดง
-                        textLabel.TextStrokeTransparency = 0
-                        textLabel.TextScaled = true
-                        textLabel.Parent = billboard
-
-                        -- อัปเดตชื่อผู้เล่นใหม่
-                        RunService.RenderStepped:Connect(function()
-                            if billboard and billboard.Parent and billboard:FindFirstChildOfClass("TextLabel") then
-                                billboard.TextLabel.Text = player.Name
-                            end
-                        end)
                     end)
                 end
             end)
