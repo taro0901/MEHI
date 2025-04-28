@@ -120,13 +120,14 @@ local RunService = game:GetService("RunService")
 local localPlayer = Players.LocalPlayer
 local espEnabled = false
 
--- ฟังก์ชันสร้าง ESP (Highlight)
+-- 📦 ฟังก์ชันสร้าง ESP (Highlight)
 local function createESP(character)
-    if character and not character:FindFirstChild("ESP_Highlight") then
+    if not character or not character:FindFirstChild("HumanoidRootPart") then return end
+    if not character:FindFirstChild("ESP_Highlight") then
         local highlight = Instance.new("Highlight")
         highlight.Name = "ESP_Highlight"
-        highlight.FillColor = Color3.fromRGB(255, 0, 0) -- สีตัว ESP
-        highlight.OutlineColor = Color3.fromRGB(255, 255, 255) -- สีขอบ
+        highlight.FillColor = Color3.fromRGB(255, 0, 0)
+        highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
         highlight.FillTransparency = 0.5
         highlight.OutlineTransparency = 0
         highlight.Adornee = character
@@ -134,69 +135,68 @@ local function createESP(character)
     end
 end
 
--- ฟังก์ชันลบ ESP
+-- 🗑️ ฟังก์ชันลบ ESP
 local function removeESP(character)
-    if character then
-        local highlight = character:FindFirstChild("ESP_Highlight")
-        if highlight then
-            highlight:Destroy()
-        end
+    if not character then return end
+    local highlight = character:FindFirstChild("ESP_Highlight")
+    if highlight then
+        highlight:Destroy()
     end
 end
 
--- ฟังก์ชันอัปเดต ESP ให้กับผู้เล่นคนเดียว
+-- 🎯 ฟังก์ชันอัปเดต ESP ของผู้เล่นคนเดียว
 local function updateESP(player)
-    if player ~= localPlayer then
-        local character = player.Character
-        if character and character:FindFirstChild("HumanoidRootPart") then
-            if espEnabled then
-                createESP(character)
-            else
-                removeESP(character)
-            end
+    if player ~= localPlayer and player.Character then
+        if espEnabled then
+            createESP(player.Character)
+        else
+            removeESP(player.Character)
         end
     end
 end
 
--- ฟังก์ชันติดตั้งเมื่อ Player ใหม่เข้ามา
+-- 📌 เมื่อ player character spawn
+local function onCharacterAdded(player, character)
+    character:WaitForChild("HumanoidRootPart", 5)
+    if espEnabled then
+        createESP(character)
+    end
+end
+
+-- 🛠️ Setup Player
 local function setupPlayer(player)
     player.CharacterAdded:Connect(function(character)
-        character:WaitForChild("HumanoidRootPart", 5) -- รอโหลด
-        if espEnabled then
-            createESP(character)
-        end
+        onCharacterAdded(player, character)
     end)
     -- เผื่อกรณีตัวละครมีอยู่แล้ว
     if player.Character then
-        updateESP(player)
+        onCharacterAdded(player, player.Character)
     end
 end
 
--- เชื่อมต่อ Player ที่มีอยู่
+-- 🔥 เชื่อมต่อกับผู้เล่นทุกคนที่มีอยู่แล้ว
 for _, player in ipairs(Players:GetPlayers()) do
     setupPlayer(player)
 end
 
--- เชื่อมต่อ Player ใหม่
-Players.PlayerAdded:Connect(function(player)
-    setupPlayer(player)
-end)
+-- 🔥 เชื่อมต่อผู้เล่นที่เข้ามาใหม่
+Players.PlayerAdded:Connect(setupPlayer)
 
--- Toggle สำหรับเปิด/ปิด ESP
+-- 🟢 Toggle ESP
 local Toggle = Tab:CreateToggle({
     Name = "ESP (มองเห็นศัตรู)",
     CurrentValue = false,
     Flag = "ESP_Toggle",
     Callback = function(Value)
         espEnabled = Value
-        -- เมื่อกด Toggle ให้เช็กทุกคนอีกที
+        -- อัปเดต ESP ให้ทุกคนอีกครั้ง
         for _, player in ipairs(Players:GetPlayers()) do
             updateESP(player)
         end
     end,
 })
 
--- อัปเดต ESP ทุกเฟรม (สำรองเผื่อมีใคร respawn)
+-- 🎥 RenderStepped อัปเดตตลอดเวลา
 RunService.RenderStepped:Connect(function()
     if espEnabled then
         for _, player in ipairs(Players:GetPlayers()) do
@@ -204,5 +204,6 @@ RunService.RenderStepped:Connect(function()
         end
     end
 end)
+
 
 
