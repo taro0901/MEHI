@@ -285,7 +285,9 @@ local staminaEnabled = false
 
 -- 📦 ฟังก์ชันล็อก Stamina (ไม่ให้ลด)
 local function lockStamina(character)
-    -- รอ Attribute 'Stamina'
+    if not character then return end
+
+    -- รอให้ Stamina Attribute ถูกสร้าง
     while not character:GetAttribute("Stamina") do
         task.wait()
     end
@@ -293,7 +295,7 @@ local function lockStamina(character)
     -- อัปเดตค่า Stamina ให้เต็มตลอด
     RunService.RenderStepped:Connect(function()
         if staminaEnabled and character and character:GetAttribute("Stamina") then
-            character:SetAttribute("Stamina", 100) -- เซ็ตเต็ม 100
+            character:SetAttribute("Stamina", 100) -- เซ็ตให้เต็ม 100
         end
     end)
 end
@@ -304,9 +306,10 @@ local function setupCharacter(char)
     lockStamina(Character)
 end
 
--- 🎯 ฟังก์ชันเมื่อเกิดตัวใหม่
+-- 🎯 ฟังก์ชันเมื่อเกิดตัวละครใหม่
 LocalPlayer.CharacterAdded:Connect(function(char)
     setupCharacter(char)
+    lockStamina(char)  -- เรียกใช้ lockStamina เมื่อ Character ถูกสร้างขึ้น
 end)
 
 -- 🛠️ เริ่มต้นทำงานกับตัวที่มีอยู่แล้ว
@@ -319,6 +322,8 @@ local Toggle = Tab:CreateToggle({
     Flag = "Stamina_Toggle",
     Callback = function(Value)
         staminaEnabled = Value
+        -- ตรวจสอบค่าที่ได้รับจาก Toggle ว่ามีการอัปเดตหรือไม่
+        print("Stamina Infinite is now", staminaEnabled and "Enabled" or "Disabled")
     end,
 })
 
