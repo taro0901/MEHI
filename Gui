@@ -136,26 +136,45 @@ local function createESP(character, player)
         highlight.Parent = character
     end
 
-    -- สร้าง BillboardGui ชื่อ+เลือด ถ้ายังไม่มี
+    -- สร้าง BillboardGui ถ้ายังไม่มี
     if not character:FindFirstChild("ESP_Billboard") then
         local billboard = Instance.new("BillboardGui")
         billboard.Name = "ESP_Billboard"
         billboard.Adornee = character:FindFirstChild("HumanoidRootPart")
-        billboard.Size = UDim2.new(0, 200, 0, 50)
+        billboard.Size = UDim2.new(0, 200, 0, 60)
         billboard.StudsOffset = Vector3.new(0, 3, 0)
         billboard.AlwaysOnTop = true
         billboard.Parent = character
 
+        -- ชื่อผู้เล่น + เลือด
         local nameLabel = Instance.new("TextLabel")
         nameLabel.Name = "NameLabel"
-        nameLabel.Size = UDim2.new(1, 0, 1, 0)
+        nameLabel.Size = UDim2.new(1, 0, 0.5, 0)
+        nameLabel.Position = UDim2.new(0, 0, 0, 0)
         nameLabel.BackgroundTransparency = 1
         nameLabel.TextColor3 = Color3.new(1, 1, 1)
         nameLabel.TextStrokeTransparency = 0
         nameLabel.TextScaled = true
         nameLabel.Font = Enum.Font.SourceSansBold
-        nameLabel.Text = "" -- จะเซ็ตทีหลังใน update
+        nameLabel.Text = ""
         nameLabel.Parent = billboard
+
+        -- แถบเลือด (พื้นหลัง)
+        local healthBarBackground = Instance.new("Frame")
+        healthBarBackground.Name = "HealthBarBackground"
+        healthBarBackground.Size = UDim2.new(1, -10, 0, 10)
+        healthBarBackground.Position = UDim2.new(0, 5, 1, -15)
+        healthBarBackground.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+        healthBarBackground.BorderSizePixel = 0
+        healthBarBackground.Parent = billboard
+
+        -- แถบเลือด (ตัวแถบ)
+        local healthBar = Instance.new("Frame")
+        healthBar.Name = "HealthBar"
+        healthBar.Size = UDim2.new(1, 0, 1, 0)
+        healthBar.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
+        healthBar.BorderSizePixel = 0
+        healthBar.Parent = healthBarBackground
     end
 end
 
@@ -174,18 +193,43 @@ local function removeESP(character)
     end
 end
 
--- 🎯 ฟังก์ชันอัปเดต ESP (ชื่อ + เลือด) ของผู้เล่น
+-- 🎯 ฟังก์ชันอัปเดต ESP (ชื่อ + เลือด + HP Bar) ของผู้เล่น
 local function updateESP(player)
     if player ~= localPlayer and player.Character then
         local character = player.Character
         if espEnabled then
             createESP(character, player)
 
-            -- อัปเดตชื่อ + HP
             local billboard = character:FindFirstChild("ESP_Billboard")
             local humanoid = character:FindFirstChildOfClass("Humanoid")
-            if billboard and billboard:FindFirstChild("NameLabel") and humanoid then
+            if billboard and humanoid and billboard:FindFirstChild("NameLabel") then
+                -- อัปเดตชื่อ + เลือด
                 billboard.NameLabel.Text = player.Name .. " (" .. math.floor(humanoid.Health) .. " HP)"
+
+                -- เปลี่ยนสีตัวหนังสือ ตามเลือด
+                if humanoid.Health <= 25 then
+                    billboard.NameLabel.TextColor3 = Color3.fromRGB(255, 0, 0) -- แดง
+                elseif humanoid.Health <= 50 then
+                    billboard.NameLabel.TextColor3 = Color3.fromRGB(255, 165, 0) -- ส้ม
+                else
+                    billboard.NameLabel.TextColor3 = Color3.fromRGB(255, 255, 255) -- ขาว
+                end
+
+                -- อัปเดต Health Bar
+                local healthBarBackground = billboard:FindFirstChild("HealthBarBackground")
+                if healthBarBackground and healthBarBackground:FindFirstChild("HealthBar") then
+                    local healthBar = healthBarBackground.HealthBar
+                    healthBar.Size = UDim2.new(math.clamp(humanoid.Health / humanoid.MaxHealth, 0, 1), 0, 1, 0)
+
+                    -- สีหลอดเลือดตามเลือด
+                    if humanoid.Health <= 25 then
+                        healthBar.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+                    elseif humanoid.Health <= 50 then
+                        healthBar.BackgroundColor3 = Color3.fromRGB(255, 165, 0)
+                    else
+                        healthBar.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
+                    end
+                end
             end
         else
             removeESP(character)
@@ -221,7 +265,7 @@ Players.PlayerAdded:Connect(setupPlayer)
 
 -- 🟢 Toggle ESP
 local Toggle = Tab:CreateToggle({
-    Name = "ESP :)",
+    Name = "ESP (ชื่อ+เลือด+ขีด HP)",
     CurrentValue = false,
     Flag = "ESP_Toggle",
     Callback = function(Value)
