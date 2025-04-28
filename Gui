@@ -45,7 +45,7 @@ local camera = workspace.CurrentCamera
 
 local aimEnabled = false
 local MAX_DISTANCE = 65
-local AIM_SMOOTHNESS = 0.35
+local AIM_SMOOTHNESS = 0.4
 
 local BLOCKED_NAMES = { -- ❌ ชื่อที่ไม่ล็อก
     ["1tygho_134"] = true
