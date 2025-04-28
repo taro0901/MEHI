@@ -315,9 +315,15 @@ local Toggle = Tab:CreateToggle({
     CurrentValue = false,
     Flag = "Stamina_Toggle",
     Callback = function(Value)
+local function lockStamina(character)
+    if not character then return end
         staminaEnabled = Value
-        -- ตรวจสอบค่าที่ได้รับจาก Toggle ว่ามีการอัปเดตหรือไม่
-        print("Stamina Infinite is now", staminaEnabled and "Enabled" or "Disabled")
+          RunService.RenderStepped:Connect(function()
+        if staminaEnabled and character and character:GetAttribute("Stamina") then
+            character:SetAttribute("Stamina", 100) -- เซ็ตให้เต็ม 100
+        end
+    end)
+end
     end,
 })
 
