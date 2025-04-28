@@ -146,18 +146,19 @@ local function createESP(character, player)
         billboard.AlwaysOnTop = true
         billboard.Parent = character
 
-        -- ชื่อผู้เล่น + เลือด
-        local nameLabel = Instance.new("TextLabel")
-        nameLabel.Name = "NameLabel"
-        nameLabel.Size = UDim2.new(1, 0, 0.5, 0)
-        nameLabel.Position = UDim2.new(0, 0, 0, 0)
-        nameLabel.BackgroundTransparency = 1
-        nameLabel.TextColor3 = Color3.new(1, 1, 1)
-        nameLabel.TextStrokeTransparency = 0
-        nameLabel.TextScaled = true
-        nameLabel.Font = Enum.Font.SourceSansBold
-        nameLabel.Text = ""
-        nameLabel.Parent = billboard
+-- ชื่อผู้เล่น + เลือด
+local nameLabel = Instance.new("TextLabel")
+nameLabel.Name = "NameLabel"
+nameLabel.Size = UDim2.new(1, 0, 0.5, 0)
+nameLabel.Position = UDim2.new(0, 0, 0, 0)
+nameLabel.BackgroundTransparency = 1
+nameLabel.TextColor3 = Color3.new(1, 1, 1)
+nameLabel.TextStrokeTransparency = 0
+nameLabel.Text = ""
+nameLabel.Font = Enum.Font.SourceSansBold
+nameLabel.TextSize = 14 -- ✏️ ขนาดตัวอักษรเล็กลงแทนการใช้ TextScaled
+nameLabel.Parent = billboard
+
 
         -- แถบเลือด (พื้นหลัง)
         local healthBarBackground = Instance.new("Frame")
