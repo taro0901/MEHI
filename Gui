@@ -49,6 +49,7 @@ local AIM_SMOOTHNESS = 0.4
 
 local BLOCKED_NAMES = { -- ❌ ชื่อที่ไม่ล็อก
     ["1tygho_134"] = true
+["KatoZa_143"] = true
 }
 
 -- หาเป้าหมายใกล้สุด
